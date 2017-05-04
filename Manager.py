@@ -11,8 +11,7 @@ import math
 
 class Manager:
     def __init__(self):
-        #self.secret = secretKey
-        #self.access = accessKey
+
         self.num_of_workers = 0
         self.should_terminate = False
         self.bucket_name = 'ass-1-bucket'
