@@ -1,4 +1,3 @@
-
 import boto3
 import sys
 import botocore
@@ -11,24 +10,19 @@ import math
 
 
 class Manager:
-    def __init__(self, secretKey, accessKey):
-        self.secret = secretKey
-        self.access = accessKey
+    def __init__(self):
+        #self.secret = secretKey
+        #self.access = accessKey
         self.num_of_workers = 0
         self.should_terminate = False
         self.bucket_name = 'dsp1-bucket-ng'
         self.sqs_names = ['Manager-worker-queue', 'Worker-manager-queue', 'Local-Manager-queue', 'Manager-local-queue']
-        self.sqs = boto3.resource(service_name='sqs', region_name='us-east-1', aws_access_key_id=accessKey,
-                                  aws_secret_access_key=secretKey)
-        self.queue = boto.sqs.connect_to_region('us-east-1', aws_access_key_id=accessKey,
-                                                aws_secret_access_key=secretKey)
-        self.ec2 = boto3.resource(service_name='ec2', region_name='us-east-1', aws_access_key_id=accessKey,
-                                  aws_secret_access_key=secretKey)
-        self.conn = boto.connect_ec2(aws_access_key_id=accessKey, aws_secret_access_key=secretKey)
-        self.s3 = boto3.client(service_name='s3', region_name='us-east-1', aws_access_key_id=accessKey,
-                               aws_secret_access_key=secretKey)
-        self.s3_resource = boto3.resource(service_name='s3', region_name='us-east-1', aws_access_key_id=accessKey,
-                                          aws_secret_access_key=secretKey)
+        self.sqs = boto3.resource(service_name='sqs')
+        self.queue = boto.sqs.connect_to_region('us-east-1')
+        self.ec2 = boto3.resource(service_name='ec2')
+        self.conn = boto.connect_ec2()
+        self.s3 = boto3.client(service_name='s3')
+        self.s3_resource = boto3.resource(service_name='s3')
 
     def create_sqs_queues(self):
         try :
@@ -54,16 +48,12 @@ class Manager:
         #TODO: upload worker py
         self.num_of_workers = min(max_num_of_instances - 1, n)
         n += 1      # +1 instance of the manager
-        ec2 = boto3.resource(service_name='ec2', region_name='us-east-1', aws_access_key_id=self.access,
-                             aws_secret_access_key=self.secret)
-        conn = boto.connect_ec2(aws_access_key_id=self.access, aws_secret_access_key=self.secret)
-
-        instances = conn.get_all_instance_status()
+        instances = self.conn.get_all_instance_status()
         if len(instances) < n and len(instances) <= max_num_of_instances:
-            ec2.create_instances(ImageId='ami-51792c38', MinCount=int(1), MaxCount=int(min(n, max_num_of_instances)),
+            self.ec2.create_instances(ImageId='ami-51792c38', MinCount=int(1), MaxCount=int(min(n, max_num_of_instances)),
                                  InstanceType='t1.micro')
         time.sleep(5)
-        instances = ec2.instances.filter(
+        instances = self.ec2.instances.filter(
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
         for instance in instances:
             # print test.tags
@@ -89,8 +79,6 @@ class Manager:
         queue.send_message(MessageAttributes=attributes, MessageBody=msg)
 
     def listen(self, sqs_name):
-        #all_messages = []
-        #all_messages_body = []
         queue = self.queue.get_queue(sqs_name)
         messages = queue.get_messages(10, message_attributes='All')
         while len(messages) > 0:
@@ -99,7 +87,6 @@ class Manager:
                 if len(message.message_attributes) > 0:
                     self.process(message)
                     message.delete()
-                #all_messages_body.append(message)
                 messages = queue.get_messages(10)
 
     def process(self, message):
@@ -196,9 +183,9 @@ class Manager:
 
 def main():
     # TODO encrypt
-    secretKey = 'bVX2TIrkidzDumwDIkPl+4QcsTqcN9xEEdxoSn3i'
-    accessKey = 'AKIAIP6TU723P3W52SNQ'
-    manager = Manager(secretKey, accessKey)
+    #secretKey = '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'
+    #accessKey = 'AKIAIP6TU723P3W52SNQ'
+    manager = Manager()
     manager.create_sqs_queues()
     while not manager.should_terminate:
         manager.listen('Local-Manager-queue')
