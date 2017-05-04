@@ -21,8 +21,8 @@ class Manager:
         #self.queue = boto.sqs.connect_to_region('us-east-1')
         self.ec2 = boto3.resource(service_name='ec2')
         print self.ec2
-        self.conn = boto.connect_ec2()
-        print self.conn
+        #self.conn = boto.connect_ec2()
+        #print self.conn
         self.s3 = boto3.client(service_name='s3')
         print self.s3
         self.s3_resource = boto3.resource(service_name='s3')
