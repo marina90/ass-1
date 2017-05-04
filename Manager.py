@@ -15,7 +15,7 @@ class Manager:
         #self.access = accessKey
         self.num_of_workers = 0
         self.should_terminate = False
-        self.bucket_name = 'dsp1-bucket-ng'
+        self.bucket_name = 'ass-1-bucket'
         self.sqs_names = ['Manager-worker-queue', 'Worker-manager-queue', 'Local-Manager-queue', 'Manager-local-queue']
         self.sqs = boto3.resource(service_name='sqs')
         self.queue = boto.sqs.connect_to_region('us-east-1')
@@ -112,7 +112,7 @@ class Manager:
                 self.makeHtml(message)
 
     def parser(self, input_file, message):
-        self.s3_resource.meta.client.download_file('dsp1-bucket-ng', input_file, input_file)
+        self.s3_resource.meta.client.download_file('ass-1-bucket', input_file, input_file)
         local_name = message.message_attributes.get('LocalName').get('string_value')
         output = message.message_attributes.get('OutputFileName').get('string_value')
         with open(input_file) as inputFile:
@@ -183,15 +183,11 @@ class Manager:
 
 def main():
     # TODO encrypt
-    #secretKey = 'bVX2TIrkidzDumwDIkPl+4QcsTqcN9xEEdxoSn3i'
-    #accessKey = 'AKIAIP6TU723P3W52SNQ'
     manager = Manager()
     manager.create_sqs_queues()
     while not manager.should_terminate:
         manager.listen('Local-Manager-queue')
         manager.listen('Worker-manager-queue')
-
-
 
 if __name__ == "__main__":
     main()
