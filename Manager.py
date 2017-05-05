@@ -37,7 +37,8 @@ class Manager:
         user_data = '''#!/bin/bash
                             apt-get update
                              git clone  https://github.com/marina90/ass-1
-                             yum install imagemagick
+                             yum update
+                             yum install ImageMagick-devel
                              pip install boto3
                              pip install botocore
                              pip install pdfminer
