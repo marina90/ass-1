@@ -1,24 +1,18 @@
-
-
-
 import boto3
 import botocore
 import time
 from botocore.exceptions import ClientError
-import base64
-
-
 
 class Manager:
     def __init__(self):
 
         self.num_of_workers = 0
         self.should_terminate = False
-        self.bucket_name = 'dsp1-bucket-gn'
+        self.bucket_name = 'ass1-bucket-gn'
         self.sqs_names = ['Manager-worker-queue', 'Worker-manager-queue', 'Local-Manager-queue', 'Manager-local-queue']
         self.sqs = boto3.resource(service_name='sqs')
         self.ec2 = boto3.resource(service_name='ec2')
-        self.s3 = boto3.client(service_name='s3', region_name='us-east-1')
+        self.s3 = boto3.client(service_name='s3')
         self.s3_resource = boto3.resource(service_name='s3')
     def create_sqs_queues(self):
         try :
@@ -178,6 +172,16 @@ class Manager:
 
 def main():
     # TODO encrypt
+    access = True
+    with open('creds.txt', 'r') as file:
+        for line in file:
+            if access:
+                accessKey = line[:-1]
+                access = False
+            else:
+                secretKey = line
+    #accessKey = base64.b64decode(accessKey)
+    #secretKey = base64.b64decode(secretKey)
     manager = Manager()
     manager.create_sqs_queues()
     while not manager.should_terminate:
