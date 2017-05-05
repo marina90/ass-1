@@ -1,6 +1,6 @@
 Django==1.11
 MarkupSafe==0.23
-PyPDF==1.26.0
+PyPDF2==1.26.0
 Wand==0.4.4
 Werkzeug==0.11.10
 boto3==1.4.4
