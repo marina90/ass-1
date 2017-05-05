@@ -38,6 +38,10 @@ class Manager:
                             apt-get update
                              git clone  https://github.com/marina90/ass-1
                              wget http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-pc-linux-gnu.tar.gz
+                             tar xfv ImageMagick-x86_64-pc-linux-gnu.tar.gz
+                             cd ImageMagick-x86_64-pc-linux-gnu
+                             ./configure --prefix=/usr/local --enable-unicode=ucs4 --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib
+                             make && make altinstall
                              pip install boto3
                              pip install botocore
                              pip install pdfminer
