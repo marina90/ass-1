@@ -1,12 +1,12 @@
+
+
+
 import boto3
-import sys
 import botocore
-from boto import sqs
 import time
 from botocore.exceptions import ClientError
-import boto
-import boto.s3.connection
-import math
+import base64
+
 
 
 class Manager:
@@ -14,19 +14,12 @@ class Manager:
 
         self.num_of_workers = 0
         self.should_terminate = False
-        self.bucket_name = 'ass-1-bucket'
+        self.bucket_name = 'dsp1-bucket-gn'
         self.sqs_names = ['Manager-worker-queue', 'Worker-manager-queue', 'Local-Manager-queue', 'Manager-local-queue']
         self.sqs = boto3.resource(service_name='sqs')
-        print self.sqs
-        #self.queue = boto.sqs.connect_to_region('us-east-1')
         self.ec2 = boto3.resource(service_name='ec2')
-        print self.ec2
-        #self.conn = boto.connect_ec2()
-        #print self.conn
-        self.s3 = boto3.client(service_name='s3')
-        print self.s3
+        self.s3 = boto3.client(service_name='s3', region_name='us-east-1')
         self.s3_resource = boto3.resource(service_name='s3')
-
     def create_sqs_queues(self):
         try :
             self.sqs.get_queue_by_name(QueueName=self.sqs_names[0])
@@ -44,22 +37,25 @@ class Manager:
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
         for instance in instances:
             if instance.tags[0]['Value'] == 'Worker':
-                self.conn.terminate_instances(instance_ids=[instance.id])
+                self.ec2.instances.filter(InstanceIds=[instance.id]).terminate()
 
     def create_workers(self, n):
         max_num_of_instances = 5
         #TODO: upload worker py
         self.num_of_workers = min(max_num_of_instances - 1, n)
         n += 1      # +1 instance of the manager
-        instances = self.conn.get_all_instance_status()
-        if len(instances) < n and len(instances) <= max_num_of_instances:
+        current_amount_of_instances = 0
+        instances = self.ec2.instances.filter(
+            Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
+        for instance in instances:
+            current_amount_of_instances += 1
+        if current_amount_of_instances < n and current_amount_of_instances <= max_num_of_instances:
             self.ec2.create_instances(ImageId='ami-51792c38', MinCount=int(1), MaxCount=int(min(n, max_num_of_instances)),
                                  InstanceType='t1.micro')
         time.sleep(5)
         instances = self.ec2.instances.filter(
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
         for instance in instances:
-            # print test.tags
             if instance.tags is None:
                 instance.create_tags(Tags=[{'Key': 'Role', 'Value': 'Worker'}])
 
@@ -82,32 +78,28 @@ class Manager:
         queue.send_message(MessageAttributes=attributes, MessageBody=msg)
 
     def listen(self, sqs_name):
-        queue = self.queue.get_queue(sqs_name)
-        messages = queue.get_messages(10, message_attributes='All')
-        while len(messages) > 0:
-            #all_messages.append(messages)
-            for message in messages:
-                if len(message.message_attributes) > 0:
-                    self.process(message)
-                    message.delete()
-                messages = queue.get_messages(10)
+        queue = self.sqs.get_queue_by_name(QueueName=sqs_name)
+        for i in range(10):
+            for message in queue.receive_messages(VisibilityTimeout=30, MessageAttributeNames=['All']):
+                self.process(message)
+                message.delete()
 
     def process(self, message):
-        local_name = message.message_attributes.get('LocalName').get('string_value')
-        output = message.message_attributes.get('OutputFileName').get('string_value')
-        if message._body == 'terminate':
+        local_name = message.message_attributes.get('LocalName').get('StringValue')
+        output = message.message_attributes.get('OutputFileName').get('StringValue')
+        if message.body == 'terminate':
             print 'Num of workers is: ' + str(self.num_of_workers)
             for i in range(self.num_of_workers):
                 self.send_message_with_attributes('terminate', local_name, output, 0, self.sqs_names[0])
             '''self.listen(self.sqs_names[1])'''
-        elif message._body == 'worker terminated':
+        elif message.body == 'worker terminated':
             self.num_of_workers -= 1
             if self.num_of_workers == 0:
                 self.terminate_workers()
                 self.send_message_with_attributes('manager terminated', local_name, output, 0, self.sqs_names[3])
                 self.should_terminate = True
         else:
-            parsed_messsage = message._body.split('\t')
+            parsed_messsage = message.body.split('\t')
             if parsed_messsage[0] == 'job':
                 self.create_workers(int(float(parsed_messsage[2])))
                 self.parser(parsed_messsage[1], message)
@@ -115,9 +107,9 @@ class Manager:
                 self.makeHtml(message)
 
     def parser(self, input_file, message):
-        self.s3_resource.meta.client.download_file('ass-1-bucket', input_file, input_file)
-        local_name = message.message_attributes.get('LocalName').get('string_value')
-        output = message.message_attributes.get('OutputFileName').get('string_value')
+        self.s3_resource.meta.client.download_file(self.bucket_name, input_file, input_file)
+        local_name = message.message_attributes.get('LocalName').get('StringValue')
+        output = message.message_attributes.get('OutputFileName').get('StringValue')
         with open(input_file) as inputFile:
             numOfLines = sum(1 for _ in inputFile)
         with open(input_file) as inputFile:
@@ -130,8 +122,8 @@ class Manager:
 
     def createHtmlPage(self, fileName, message):
         print "creating html "
-        numOfLines = int(message.message_attributes.get('NumOfLines').get('string_value'))
-        line = message._body
+        numOfLines = int(message.message_attributes.get('NumOfLines').get('StringValue'))
+        line = message.body
         content = "<html><body>" + line + "<br>\n"
         with open(fileName, 'w') as outputFile:
             outputFile.write(content)
@@ -146,15 +138,15 @@ class Manager:
             outputFile.write("</body></html>")
         # save outputFile to s3
         self.upload(fileName)
-        localName = message.message_attributes.get('LocalName').get('string_value')
-        fileName = message.message_attributes.get('OutputFileName').get('string_value') + '.html'
-        numOfLines = int(message.message_attributes.get('NumOfLines').get('string_value'))
+        localName = message.message_attributes.get('LocalName').get('StringValue')
+        fileName = message.message_attributes.get('OutputFileName').get('StringValue') + '.html'
+        numOfLines = int(message.message_attributes.get('NumOfLines').get('StringValue'))
         self.send_message_with_attributes("Done html", localName, fileName, numOfLines, self.sqs_names[3])
 
     def addToHtmlPage(self, fileName, message):
         print "adding html "
-        line = message._body
-        numOfLines = int(message.message_attributes.get('NumOfLines').get('string_value'))
+        line = message.body
+        numOfLines = int(message.message_attributes.get('NumOfLines').get('StringValue'))
         with open(fileName, 'a') as outputFile:
             outputFile.write(line + "<br>\n")
         with open(fileName, 'r') as outputfile:
@@ -166,10 +158,10 @@ class Manager:
             self.upload(fileName)
 
     def makeHtml(self, message):
-        fileName = message.message_attributes.get('LocalName').get('string_value') + '.html'
+        fileName = message.message_attributes.get('LocalName').get('StringValue') + '.html'
         exists = False
         try:
-            self.s3_resource.Object('dsp1-bucket-ng', fileName).load()
+            self.s3_resource.Object(self.bucket_name, fileName).load()
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == "404":
                 exists = False
@@ -191,6 +183,8 @@ def main():
     while not manager.should_terminate:
         manager.listen('Local-Manager-queue')
         manager.listen('Worker-manager-queue')
+
+
 
 if __name__ == "__main__":
     main()
