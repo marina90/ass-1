@@ -3,6 +3,8 @@ import botocore
 import time
 from botocore.exceptions import ClientError
 
+
+
 class Manager:
     def __init__(self):
 
@@ -35,6 +37,16 @@ class Manager:
 
     def create_workers(self, n):
         max_num_of_instances = 5
+        user_data = '''#!/bin/bash
+                            apt-get update
+                             git clone  https://github.com/marina90/ass-1
+                             pip install boto3
+                             pip install botocore
+                             pip install pdfminer
+                             pip install wand
+                              pip install -r ass-1/requirements.txt
+                               python ass-1/Worker.py
+                             '''
         #TODO: upload worker py
         self.num_of_workers = min(max_num_of_instances - 1, n)
         n += 1      # +1 instance of the manager
@@ -44,8 +56,8 @@ class Manager:
         for instance in instances:
             current_amount_of_instances += 1
         if current_amount_of_instances < n and current_amount_of_instances <= max_num_of_instances:
-            self.ec2.create_instances(ImageId='ami-51792c38', MinCount=int(1), MaxCount=int(min(n, max_num_of_instances)),
-                                 InstanceType='t1.micro')
+            self.ec2.create_instances(ImageId='ami-bb6801ad', MinCount=int(1), MaxCount=int(1), InstanceType='t1.micro',
+                                      KeyName='KeyPair', SecurityGroups=['default'],UserData=user_data)
         time.sleep(5)
         instances = self.ec2.instances.filter(
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
@@ -173,6 +185,17 @@ class Manager:
 def main():
     # TODO encrypt
     access = True
+    '''
+    #with open('creds.txt', 'r') as file:
+        for line in file:
+            if access:
+                accessKey = line[:-1]
+                access = False
+            else:
+                secretKey = line
+    '''
+    #accessKey = base64.b64decode(accessKey)
+    #secretKey = base64.b64decode(secretKey)
     manager = Manager()
     manager.create_sqs_queues()
     while not manager.should_terminate:
