@@ -37,7 +37,8 @@ class Manager:
         user_data = '''#!/bin/bash
                             apt-get update
                              git clone  https://github.com/marina90/ass-1
-                             apt-get install libmagickwand-dev
+                             rpm -Uvh ImageMagick-6.9.8-4.x86_64.rpm
+                             rpm -Uvh ImageMagick-libs-6.9.8-4.x86_64.rpm
                              pip install boto3
                              pip install botocore
                              pip install pdfminer
