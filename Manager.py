@@ -4,10 +4,8 @@ import time
 from botocore.exceptions import ClientError
 
 
-
 class Manager:
     def __init__(self):
-
         self.num_of_workers = 0
         self.should_terminate = False
         self.bucket_name = 'ass1-bucket-gn'
@@ -16,16 +14,15 @@ class Manager:
         self.ec2 = boto3.resource(service_name='ec2')
         self.s3 = boto3.client(service_name='s3')
         self.s3_resource = boto3.resource(service_name='s3')
+
     def create_sqs_queues(self):
-        try :
+        try:
             self.sqs.get_queue_by_name(QueueName=self.sqs_names[0])
-        except :
-            #print "no queue with this name"
+        except:
             self.sqs.create_queue(QueueName=self.sqs_names[0])
-        try :
+        try:
             self.sqs.get_queue_by_name(QueueName=self.sqs_names[1])
-        except :
-            #print "no queue with this name"
+        except:
             self.sqs.create_queue(QueueName=self.sqs_names[1])
 
     def terminate_workers(self):
@@ -40,15 +37,14 @@ class Manager:
         user_data = '''#!/bin/bash
                             apt-get update
                              git clone  https://github.com/marina90/ass-1
-                             sudo apt-get install imagemagick
+                             yum install imagemagick
                              pip install boto3
                              pip install botocore
                              pip install pdfminer
                              pip install wand
-                              pip install -r ass-1/requirements.txt
-                               python ass-1/Worker.py
+                             pip install -r ass-1/requirements.txt
+                             python ass-1/Worker.py
                              '''
-        #TODO: upload worker py
         self.num_of_workers = min(max_num_of_instances - 1, n)
         n += 1      # +1 instance of the manager
         current_amount_of_instances = 0
@@ -98,7 +94,6 @@ class Manager:
             print 'Num of workers is: ' + str(self.num_of_workers)
             for i in range(self.num_of_workers):
                 self.send_message_with_attributes('terminate', local_name, output, 0, self.sqs_names[0])
-            '''self.listen(self.sqs_names[1])'''
         elif message.body == 'worker terminated':
             self.num_of_workers -= 1
             if self.num_of_workers == 0:
@@ -106,10 +101,10 @@ class Manager:
                 self.send_message_with_attributes('manager terminated', local_name, output, 0, self.sqs_names[3])
                 self.should_terminate = True
         else:
-            parsed_messsage = message.body.split('\t')
-            if parsed_messsage[0] == 'job':
-                self.create_workers(int(float(parsed_messsage[2])))
-                self.parser(parsed_messsage[1], message)
+            parsed_message = message.body.split('\t')
+            if parsed_message[0] == 'job':
+                self.create_workers(int(float(parsed_message[2])))
+                self.parser(parsed_message[1], message)
             else:      #finished task
                 self.makeHtml(message)
 
@@ -184,26 +179,11 @@ class Manager:
 
 
 def main():
-    # TODO encrypt
-    access = True
-    '''
-    #with open('creds.txt', 'r') as file:
-        for line in file:
-            if access:
-                accessKey = line[:-1]
-                access = False
-            else:
-                secretKey = line
-    '''
-    #accessKey = base64.b64decode(accessKey)
-    #secretKey = base64.b64decode(secretKey)
     manager = Manager()
     manager.create_sqs_queues()
     while not manager.should_terminate:
         manager.listen('Local-Manager-queue')
         manager.listen('Worker-manager-queue')
-
-
 
 if __name__ == "__main__":
     main()
