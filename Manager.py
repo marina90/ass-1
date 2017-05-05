@@ -37,8 +37,7 @@ class Manager:
         user_data = '''#!/bin/bash
                             apt-get update
                              git clone  https://github.com/marina90/ass-1
-                             rpm -Uvh ImageMagick-6.9.8-4.x86_64.rpm
-                             rpm -Uvh ImageMagick-libs-6.9.8-4.x86_64.rpm
+                             wget http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-pc-linux-gnu.tar.gz
                              pip install boto3
                              pip install botocore
                              pip install pdfminer
