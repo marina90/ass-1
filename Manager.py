@@ -173,15 +173,6 @@ class Manager:
 def main():
     # TODO encrypt
     access = True
-    with open('creds.txt', 'r') as file:
-        for line in file:
-            if access:
-                accessKey = line[:-1]
-                access = False
-            else:
-                secretKey = line
-    #accessKey = base64.b64decode(accessKey)
-    #secretKey = base64.b64decode(secretKey)
     manager = Manager()
     manager.create_sqs_queues()
     while not manager.should_terminate:
