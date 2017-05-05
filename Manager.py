@@ -40,6 +40,7 @@ class Manager:
         user_data = '''#!/bin/bash
                             apt-get update
                              git clone  https://github.com/marina90/ass-1
+                             sudo apt-get install imagemagick
                              pip install boto3
                              pip install botocore
                              pip install pdfminer
