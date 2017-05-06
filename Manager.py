@@ -35,20 +35,20 @@ class Manager:
     def create_workers(self, n):
         max_num_of_instances = 5
         user_data = '''#!/bin/bash
-                            apt-get update
-                             git clone  https://github.com/marina90/ass-1
-                             wget http://www.imagemagick.org/download/binaries/ImageMagick-x86_64-pc-linux-gnu.tar.gz
-                             tar xfv ImageMagick-x86_64-pc-linux-gnu.tar.gz
-                             cd ImageMagick-6.9.2
-                             ./configure --prefix=/usr/local --enable-unicode=ucs4 --enable-shared LDFLAGS="-Wl,-rpath /usr/local/lib
-                             make && make altinstall
-                             pip install boto3
-                             pip install botocore
-                             pip install pdfminer
-                             pip install wand
-                             pip install -r ass-1/requirements.txt
-                             python ass-1/Worker.py
-                             '''
+                                    apt-get update
+                                    --nogpgcheck --skip-broken -y dos2unix glances screen gcc make python-devel python-setuptools python-pip git rubygems rpmbuild ruby-devel
+                                    yum -y install --nogpgcheck ImageMagick
+                                    yum -y install --nogpgcheck python2.7
+                                    apt-get install python2.7
+                                     git clone  https://github.com/marina90/ass-1
+                                     sudo apt-get install imagemagick
+                                     pip install boto3
+                                     pip install botocore
+                                     pip install pdfminer
+                                     pip install wand
+                                      pip install -r ass-1/requirements.txt
+                                       python ass-1/Worker.py
+                                     '''
         self.num_of_workers = min(max_num_of_instances - 1, n)
         n += 1      # +1 instance of the manager
         current_amount_of_instances = 0
