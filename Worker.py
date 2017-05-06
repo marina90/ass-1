@@ -37,47 +37,47 @@ class Worker :
                         msg_to_sqs = msg_to_sqs.replace("\n", " ")
                         message.delete()
                         self.send_to_sqs(msg_to_sqs,attributes)
-                    else : #message that need to be processed
-                        processed_data=self.run_task(message.body)
-                        if self.error_occurred_while_trying_to_format is True:
-                            msg_to_sqs = message.body + "\t"  + str(processed_data)
-                            msg_to_sqs = msg_to_sqs.replace("\n"," ")
+                    else: #message that need to be processed
+                        processed_data = self.run_task(message.body)
+                        if self.error_occurred_while_trying_to_format or processed_data == "wrong message ":
+                            msg_to_sqs = message.body + "\t" + str(processed_data)
+                            msg_to_sqs = msg_to_sqs.replace("\n", " ")
                             self.send_to_sqs(msg_to_sqs,attributes)
                             self.error_occurred_while_trying_to_format = False
                         else:
-                            url_of_s3 =self.upload(processed_data) #uploading the new data to the s3
+                            url_of_s3 = self.upload(processed_data) #uploading the new data to the s3
                             parsed_message = message.body.split("\t")  # 0 - action ,1 - url
                             msg_to_sqs = parsed_message[1] + "\t" + url_of_s3 + "\t" + parsed_message[0]
                             msg_to_sqs = msg_to_sqs.replace("\n"," ")
-                            self.send_to_sqs(msg_to_sqs,attributes)
+                            self.send_to_sqs(msg_to_sqs, attributes)
                         message.delete()
             except Exception as e:
                 print e
 
-    def  run_task(self, msg):
+    def run_task(self, msg):
         parsed_message = msg.split("\t")
-        processed_data = "wrong message format ,nothing changed "
-        if parsed_message[0] == "ToImage" :
+        processed_data = "wrong message "
+        if parsed_message[0] == "ToImage":
             print "Trying to convert to Image"
-            processed_data=self.convert_to_image(parsed_message[1])
-        elif parsed_message[0] == "ToHTML" :
+            processed_data = self.convert_to_image(parsed_message[1])
+        elif parsed_message[0] == "ToHTML":
             print "Trying to convert to HTML"
-            processed_data =self.convert_to_html(parsed_message[1])
+            processed_data = self.convert_to_html(parsed_message[1])
         elif parsed_message[0] == "ToText":
             print "Trying to convert to Text"
-            processed_data =self.convert_to_text(parsed_message[1])
-        else :
+            processed_data = self.convert_to_text(parsed_message[1])
+        else:
             print "error : Wrong message format "
         return processed_data
 
-    def  send_to_sqs(self,msg,attributes):
+    def send_to_sqs(self, msg, attributes):
         outQueue=self.connection.get_queue_by_name(QueueName=self.sqs_names[1])
         outQueue.send_message(MessageBody = msg, MessageAttributes = attributes)
 
-    def  upload(self,to_upload) :
+    def upload(self, to_upload):
         s3 = boto3.client(service_name='s3')
-        s3.upload_file(to_upload,self.s3_bucket_name, to_upload)
-        return "https://s3.amazonaws.com/{}/{}".format(self.s3_bucket_name, to_upload)
+        s3.upload_file(to_upload, self.s3_bucket_name, to_upload)
+        return "https://s3.amazonaws.com/" + self.s3_bucket_name + '/' + to_upload
 
     def convert_to_image(self,msg):
         filename = msg.rsplit('/', 1)[1]
