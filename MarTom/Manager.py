@@ -87,7 +87,7 @@ class Manager:
         instances = self.ec2.instances.filter(
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
         instance_counter = 0
-        for instance in instances:
+        for i in range(len(instances)):
             instance_counter += 1
         return instance_counter
 
