@@ -101,7 +101,7 @@ class Manager:
         if message.body == 'terminate':
             self.counter = self.count_instances()
             for i in range(self.counter - 1):
-                self.send_message_with_attributes('terminate', local_name, 0, self.sqs_names[0])
+                self.send('terminate', local_name, 0, self.sqs_names[0])
         elif message.body == 'worker terminated':
             self.counter -= 1
             if self.counter == 0:
