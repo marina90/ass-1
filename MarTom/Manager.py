@@ -34,7 +34,7 @@ class Manager:
                                     pip install pdfminer
                                     pip install wand
                                     pip install -r ass-1/requirements.txt
-                                    python ass-1/MarTom/Worker.py
+                                    python ass-1/Worker.py
                                     '''
         current_amount_of_instances = 0
         instances = self.ec2.instances.filter(
@@ -84,16 +84,16 @@ class Manager:
                 message.delete()
 
     def count_instances(self):
-        instances = ec2.instances.filter(
+        instances = self.ec2.instances.filter(
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
         instance_counter = 0
         for instance in instances:
             instance_counter += 1
         return instance_counter
 
-    def send_terminate(self):
+    def send_terminate(self, local_name):
         self.terminate_workers()
-        self.send_message_with_attributes('manager terminated', local_name, 0, self.sqs_names[3])
+        self.send('manager terminated', local_name, 0, self.sqs_names[3])
         self.should_terminate = True
 
     def do(self, message):
@@ -105,7 +105,7 @@ class Manager:
         elif message.body == 'worker terminated':
             self.counter -= 1
             if self.counter == 0:
-                self.send_terminate()
+                self.send_terminate(local_name)
         else:
             parsed_message = message.body.split('\t')
             if parsed_message[0] == 'job':
@@ -169,5 +169,5 @@ def main():
         manager.wait_for_message(manager.sqs_names[1])
 
 
-if __name__ == "__main__":
+if __name__ == "_main_":
     main()
