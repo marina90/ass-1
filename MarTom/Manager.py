@@ -34,7 +34,7 @@ class Manager:
                                     pip install pdfminer
                                     pip install wand
                                     pip install -r ass-1/requirements.txt
-                                    python ass-1/MarTom/Worker.py
+                                    python ass-1/Worker.py
                                     '''
         current_amount_of_instances = 0
         instances = self.ec2.instances.filter(
