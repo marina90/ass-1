@@ -10,7 +10,7 @@ from wand.image import Image
 from wand.exceptions import WandException
 
 
-class Worker:
+class Worker :
 
     def __init__(self):
         self.connection = boto3.resource(service_name='sqs')
@@ -18,6 +18,7 @@ class Worker:
         self.format_error_flag = False
         self.sqs_names =['Manager-Worker-queue', 'Worker-Manager-queue']
         self.s3_bucket_name = 'dsp1-bucket'
+
 
     def convert(self, msg):
         parsed_message = msg.split("\t")
@@ -100,6 +101,7 @@ class Worker:
             testfile.retrieve(msg, filename)
         except IOError as e:
             self.format_error_flag = True
+            print "hey"
             return e
         except :
             self.format_error_flag = True
@@ -129,10 +131,10 @@ def main():
         except Exception as e:
             print e
             print "The queue: " + worker.sqs_names[0] + " is not available yet. Please wait."
-            time.sleep(10)
+            time.sleep(20)
     while worker.active:
         try:
-            for message in inQueue.receive_messages(VisibilityTimeout=30, MessageAttributeNames=['All']):
+            for message in inQueue.receive_messages(VisibilityTimeout=45, MessageAttributeNames=['All']):
                 attributes = message.message_attributes
                 if (message.body == "terminate"):
                     worker.active = False
@@ -161,5 +163,3 @@ def main():
 if __name__ == "__main__":
     worker = Worker()
     main()
-
-main()
