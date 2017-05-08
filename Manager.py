@@ -40,15 +40,15 @@ class Manager:
                                     yum -y install --nogpgcheck ImageMagick
                                     yum -y install --nogpgcheck python2.7
                                     apt-get install python2.7
-                                     git clone  https://github.com/marina90/ass-1
-                                     sudo apt-get install imagemagick
-                                     pip install boto3
-                                     pip install botocore
-                                     pip install pdfminer
-                                     pip install wand
-                                      pip install -r ass-1/requirements.txt
-                                       python ass-1/Worker.py
-                                     '''
+                                    git clone  https://github.com/marina90/ass-1
+                                    sudo apt-get install imagemagick
+                                    pip install boto3
+                                    pip install botocore
+                                    pip install pdfminer
+                                    pip install wand
+                                    pip install -r ass-1/requirements.txt
+                                    python ass-1/Worker.py
+                                    '''
         self.num_of_workers = min(max_num_of_instances - 1, n)
         n += 1      # +1 instance of the manager
         current_amount_of_instances = 0
@@ -57,7 +57,7 @@ class Manager:
         for instance in instances:
             current_amount_of_instances += 1
         if current_amount_of_instances < n and current_amount_of_instances < max_num_of_instances:
-            self.ec2.create_instances(ImageId='ami-bb6801ad', MinCount=int(1), MaxCount=int(min(max_num_of_instances, n)), InstanceType='t1.micro',
+            self.ec2.create_instances(ImageId='ami-bb6801ad', MinCount=int(1), MaxCount=int(1), InstanceType='t1.micro',
                                       KeyName='KeyPair', SecurityGroups=['default'],UserData=user_data)
         time.sleep(5)
         instances = self.ec2.instances.filter(
@@ -186,8 +186,8 @@ def main():
     manager = Manager()
     manager.create_sqs_queues()
     while not manager.should_terminate:
-        manager.listen('Local-Manager-queue')
-        manager.listen('Worker-manager-queue')
+        manager.listen(manager.sqs_names[2])
+        manager.listen(manager.sqs_names[1])
 
 if __name__ == "__main__":
     main()
