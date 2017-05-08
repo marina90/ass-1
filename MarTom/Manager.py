@@ -100,6 +100,7 @@ class Manager:
         local_name = message.message_attributes.get('LocalName').get('StringValue')
         if 'terminate' in  message.body:
             self.counter = self.count_instances()
+            print self.count_instances()
             for i in range(self.counter - 1):
                 self.send('terminate', local_name, 0, self.sqs_names[0])
         elif message.body == 'worker terminated':
