@@ -44,8 +44,8 @@ class Manager:
         n = min(n, max_num_of_instances)
         if current_amount_of_instances < n:
             try:
-                self.ec2.create_instances(ImageId='ami-bb6801ad', MinCount=int(1), MaxCount=int(n), InstanceType='t1.micro',
-                                          KeyName='KeyPair', SecurityGroups=['default'], UserData=user_data)
+                self.ec2.create_instances(ImageId='ami-bb6801ad', MinCount=1, MaxCount=n, InstanceType='t1.micro',
+                                      KeyName='KeyPair', SecurityGroups=['default'],UserData=user_data)
             except Exception as e:
                 print e
         time.sleep(5)
@@ -90,7 +90,7 @@ class Manager:
         for instance in instances:
             instance_counter += 1
         return instance_counter
-
+    
     def send_terminate(self, local_name):
         self.terminate_workers()
         self.send('manager terminated', local_name, 0, self.sqs_names[3])
@@ -98,21 +98,21 @@ class Manager:
 
     def do(self, message):
         local_name = message.message_attributes.get('LocalName').get('StringValue')
-        if 'terminate' in  message.body:
+        print message.body
+        if message.body == 'terminate':
             self.counter = self.count_instances()
-            print self.count_instances()
             for i in range(self.counter - 1):
                 self.send('terminate', local_name, 0, self.sqs_names[0])
         elif 'worker terminated' in message.body:
             self.counter -= 1
-            if self.counter == 0:
+            if self.counter == 1:   #1 instance should remain for the manager
                 self.send_terminate(local_name)
         else:
             parsed_message = message.body.split('\t')
             if parsed_message[0] == 'job':
                 self.start_workers(int(float(parsed_message[2])))
                 self.split_and_send(parsed_message[1], message)
-            else:  # finished task
+            else:      #finished task
                 self.makeHtmlFile(message)
 
     def split_and_send(self, input_file, message):
@@ -127,6 +127,7 @@ class Manager:
 
     def upload(self, to_upload):
         self.s3.upload_file(to_upload, self.bucket_name, to_upload)
+
 
     def makeHtmlFile(self, message):
         fileName = message.message_attributes.get('LocalName').get('StringValue') + '.html'
@@ -164,13 +165,13 @@ class Manager:
 
 def main():
     manager = Manager()
+    manager.start_workers(3)
     while not manager.should_terminate:
         print 'switch'
-        manager.wait_for_message(manager.sqs_names[2])
         manager.wait_for_message(manager.sqs_names[1])
+        manager.wait_for_message(manager.sqs_names[2])
 
-
-if __name__ == "_main_":
+if __name__ == "__main__":
     main()
 
 main()
