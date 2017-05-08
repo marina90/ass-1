@@ -44,7 +44,7 @@ class Manager:
         n = min(n, max_num_of_instances)
         if current_amount_of_instances < n:
             try:
-                self.ec2.create_instances(ImageId='ami-bb6801ad', MinCount=1, MaxCount=n, InstanceType='t1.micro',
+                self.ec2.create_instances(ImageId='ami-bb6801ad', MinCount=int(1), MaxCount=int(n), InstanceType='t1.micro',
                                           KeyName='KeyPair', SecurityGroups=['default'], UserData=user_data)
             except Exception as e:
                 print e
@@ -87,7 +87,7 @@ class Manager:
         instances = self.ec2.instances.filter(
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
         instance_counter = 0
-        for i in range(len(instances)):
+        for instance in instances:
             instance_counter += 1
         return instance_counter
 
