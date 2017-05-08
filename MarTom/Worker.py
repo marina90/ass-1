@@ -163,3 +163,5 @@ def main():
 if __name__ == "__main__":
     worker = Worker()
     main()
+
+main()
