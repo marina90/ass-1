@@ -98,7 +98,7 @@ class Manager:
 
     def do(self, message):
         local_name = message.message_attributes.get('LocalName').get('StringValue')
-        if str(message.body).rstrip() == 'terminate':
+        if message.body in ['terminate']:
             self.counter = self.count_instances()
             for i in range(self.counter - 1):
                 self.send('terminate', local_name, 0, self.sqs_names[0])
