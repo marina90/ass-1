@@ -10,7 +10,7 @@ from wand.image import Image
 from wand.exceptions import WandException
 
 
-class Worker :
+class Worker:
 
     def __init__(self):
         self.connection = boto3.resource(service_name='sqs')
@@ -161,3 +161,5 @@ def main():
 if __name__ == "__main__":
     worker = Worker()
     main()
+
+main()
