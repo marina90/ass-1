@@ -16,7 +16,7 @@ class Manager:
         self.start_sqs()
 
     def start_sqs(self):
-        for i in range(len(self.sqs_names)):
+        for i in range(4):
             self.sqs.create_queue(QueueName=self.sqs_names[i])
 
     def start_workers(self, n):
