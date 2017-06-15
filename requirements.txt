@@ -1,7 +1,0 @@
-boto3==1.4.4
-PyPDF2==1.26.0
-Wand==0.4.4
-Werkzeug==0.11.10
-botocore==1.5.29
-image==1.5.5
-pdfminer==20140328
