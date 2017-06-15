@@ -33,7 +33,6 @@ class Manager:
                                     pip install botocore
                                     pip install pdfminer
                                     pip install wand
-                                    pip install -r ass-1/requirements.txt
                                     python ass-1/MarTom/Worker.py
                                     '''
         current_amount_of_instances = 0
