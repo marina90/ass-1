@@ -27,7 +27,7 @@ class Manager:
                                     yum -y install --nogpgcheck ImageMagick
                                     yum -y install --nogpgcheck python2.7
                                     apt-get install python2.7
-                                    git clone  https://github.com/marina90/ass-1/MarTom
+                                    git clone  https://github.com/marina90/ass-1
                                     sudo apt-get install imagemagick
                                     pip install boto3
                                     pip install botocore
