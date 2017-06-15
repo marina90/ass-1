@@ -44,7 +44,7 @@ class Manager:
         n = min(n, max_num_of_instances)
         if current_amount_of_instances < n:
             try:
-                self.ec2.create_instances(ImageId='ami-bb6801ad', MinCount=1, MaxCount=n, InstanceType='t1.micro',
+                self.ec2.create_instances(ImageId='ami-43bb9d55', MinCount=1, MaxCount=n, InstanceType='t1.micro',
                                       KeyName='KeyPair', SecurityGroups=['default'],UserData=user_data)
             except Exception as e:
                 print e
