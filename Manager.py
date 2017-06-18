@@ -46,7 +46,7 @@ class Manager:
                                     pip install botocore
                                     pip install pdfminer
                                     pip install wand
-                                    pip install -r ass-1/requirements.txt
+                                    
                                     python ass-1/Worker.py
                                     '''
         self.num_of_workers = min(max_num_of_instances - 1, n)
@@ -57,7 +57,7 @@ class Manager:
         for instance in instances:
             current_amount_of_instances += 1
         if current_amount_of_instances < n and current_amount_of_instances < max_num_of_instances:
-            self.ec2.create_instances(ImageId='ami-bb6801ad', MinCount=int(1), MaxCount=int(1), InstanceType='t1.micro',
+            self.ec2.create_instances(ImageId='ami-8e4b6a98', MinCount=int(1), MaxCount=int(1), InstanceType='t1.micro',
                                       KeyName='KeyPair', SecurityGroups=['default'],UserData=user_data)
         time.sleep(5)
         instances = self.ec2.instances.filter(
@@ -191,5 +191,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
-main()    
