@@ -9,7 +9,7 @@ class Manager:
         self.num_of_workers = 0
         self.should_terminate = False
         self.bucket_name = 'ass1-bucket-gn'
-        self.sqs_names = ['Manager-worker-queue', 'Worker-manager-queue', 'Local-manager-queue', 'Manager-local-queue']
+        self.sqs_names = ['Manager-worker-queue', 'Worker-manager-queue', 'Local-Manager-queue', 'Manager-local-queue']
         self.sqs = boto3.resource(service_name='sqs')
         self.ec2 = boto3.resource(service_name='ec2')
         self.s3 = boto3.client(service_name='s3')
@@ -56,7 +56,7 @@ class Manager:
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
         for instance in instances:
             current_amount_of_instances += 1
-        if current_amount_of_instances < n and current_amount_of_instances < max_num_of_instances:
+        if current_amount_of_instances < n and current_amount_of_instances <= max_num_of_instances:
             self.ec2.create_instances(ImageId='ami-8e4b6a98', MinCount=int(1), MaxCount=int(1), InstanceType='t1.micro',
                                       KeyName='KeyPair', SecurityGroups=['default'],UserData=user_data)
         time.sleep(5)
@@ -186,8 +186,8 @@ def main():
     manager = Manager()
     manager.create_sqs_queues()
     while not manager.should_terminate:
-        manager.listen(manager.sqs_names[2])
-        manager.listen(manager.sqs_names[1])
+        manager.listen('Local-Manager-queue')
+        manager.listen('Worker-manager-queue')
 
 if __name__ == "__main__":
     main()

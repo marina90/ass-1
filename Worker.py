@@ -31,7 +31,7 @@ class Worker :
             try:
                 for message in inQueue.receive_messages(VisibilityTimeout = 30,MessageAttributeNames = ['All']) :
                     attributes = message.message_attributes
-                    if "terminate" in message.body :
+                    if (message.body == "terminate") :
                         self.running = False
                         msg_to_sqs = 'worker terminated'
                         msg_to_sqs = msg_to_sqs.replace("\n", " ")
@@ -145,7 +145,7 @@ class Worker :
             interpreter.process_page(page)
             data = retstr.getvalue()
             break
-        upload_file = open(filename, 'w+')
+        upload_file = open(filename, 'w')
         upload_file.write(data)
         return filename
 
