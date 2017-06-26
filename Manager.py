@@ -55,10 +55,10 @@ class Manager:
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
         for instance in instances:
             current_amount_of_instances += 1
-        if current_amount_of_instances < n and current_amount_of_instances <= max_num_of_instances:
-            self.ec2.create_instances(ImageId='ami-8e4b6a98', MinCount=int(1), MaxCount=int(1), InstanceType='t1.micro',
+        if current_amount_of_instances < n and current_amount_of_instances < max_num_of_instances:
+            self.ec2.create_instances(ImageId='ami-8e4b6a98', MinCount=int(1), MaxCount=int(n), InstanceType='t1.micro',
                                       KeyName='KeyPair', SecurityGroups=['default'],UserData=user_data)
-            self.num_of_workers += 1
+            self.num_of_workers = n - 1
         time.sleep(5)
         instances = self.ec2.instances.filter(
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
