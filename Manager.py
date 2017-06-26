@@ -96,7 +96,7 @@ class Manager:
         output = message.message_attributes.get('OutputFileName').get('StringValue')
         if message.body == 'terminate':
             print 'Num of workers is: ' + str(self.num_of_workers)
-            for i in range(self.num_of_workers):
+            for i in range(1, self.num_of_workers):
                 self.send_message_with_attributes('terminate', local_name, output, 0, self.sqs_names[0])
         elif message.body == 'worker terminated':
             self.num_of_workers -= 1
