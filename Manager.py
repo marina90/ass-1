@@ -50,6 +50,7 @@ class Manager:
                                     python ass-1/Worker.py
                                     '''
         n += 1      # +1 instance of the manager
+        n = min(n, max_num_of_instances)
         current_amount_of_instances = 0
         instances = self.ec2.instances.filter(
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
