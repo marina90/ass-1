@@ -49,7 +49,6 @@ class Manager:
                                     
                                     python ass-1/Worker.py
                                     '''
-        self.num_of_workers = min(max_num_of_instances - 1, n)
         n += 1      # +1 instance of the manager
         current_amount_of_instances = 0
         instances = self.ec2.instances.filter(
@@ -59,6 +58,7 @@ class Manager:
         if current_amount_of_instances < n and current_amount_of_instances <= max_num_of_instances:
             self.ec2.create_instances(ImageId='ami-8e4b6a98', MinCount=int(1), MaxCount=int(1), InstanceType='t1.micro',
                                       KeyName='KeyPair', SecurityGroups=['default'],UserData=user_data)
+            self.num_of_workers += 1
         time.sleep(5)
         instances = self.ec2.instances.filter(
             Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'initializing', 'pending']}])
@@ -96,7 +96,7 @@ class Manager:
         output = message.message_attributes.get('OutputFileName').get('StringValue')
         if message.body == 'terminate':
             print 'Num of workers is: ' + str(self.num_of_workers)
-            for i in range(1, self.num_of_workers):
+            for i in range(self.num_of_workers):
                 self.send_message_with_attributes('terminate', local_name, output, 0, self.sqs_names[0])
         elif message.body == 'worker terminated':
             self.num_of_workers -= 1
