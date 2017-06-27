@@ -8,7 +8,6 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 from wand.image import Image
 from wand.exceptions import WandException
-import timeit
 
 
 class Worker :
@@ -29,8 +28,7 @@ class Worker :
             time.sleep(10)
             self.pull_and_download()
         while self.running:
-            try:
-                for message in inQueue.receive_messages(VisibilityTimeout = 60,MessageAttributeNames = ['All']) :
+                for message in inQueue.receive_messages(VisibilityTimeout = 30,MessageAttributeNames = ['All']) :
                     attributes = message.message_attributes
                     if (message.body == "terminate") :
                         self.running = False
@@ -39,27 +37,20 @@ class Worker :
                         message.delete()
                         self.send_to_sqs(msg_to_sqs,attributes)
                     else: #message that need to be processed
-                        time = timeit.Timer('self.run_task(message.body)').timeit(number=1)
-                        if time > 25:
-                            message.delete()
-                            msg_to_sqs = "time_out_ERROR"
-                            self.send_to_sqs(msg_to_sqs, attributes)
+                        processed_data = self.run_task(message.body)
+                        if self.error_occurred_while_trying_to_format or processed_data == "wrong message ":
+                            msg_to_sqs = message.body + "\t" + str(processed_data)
+                            msg_to_sqs = msg_to_sqs.replace("\n", " ")
+                            self.send_to_sqs(msg_to_sqs,attributes)
+                            self.error_occurred_while_trying_to_format = False
                         else:
-                            processed_data = self.run_task(message.body)
-                            if self.error_occurred_while_trying_to_format or processed_data == "wrong message ":
-                                msg_to_sqs = message.body + "\t" + str(processed_data)
-                                msg_to_sqs = msg_to_sqs.replace("\n", " ")
-                                self.send_to_sqs(msg_to_sqs,attributes)
-                                self.error_occurred_while_trying_to_format = False
-                            else:
-                                url_of_s3 = self.upload(processed_data) #uploading the new data to the s3
-                                parsed_message = message.body.split("\t")  # 0 - action ,1 - url
-                                msg_to_sqs = parsed_message[1] + "\t" + url_of_s3 + "\t" + parsed_message[0]
-                                msg_to_sqs = msg_to_sqs.replace("\n"," ")
-                                self.send_to_sqs(msg_to_sqs, attributes)
-                            message.delete()
-            except Exception as e:
-                print e
+                            url_of_s3 = self.upload(processed_data) #uploading the new data to the s3
+                            parsed_message = message.body.split("\t")  # 0 - action ,1 - url
+                            msg_to_sqs = parsed_message[1] + "\t" + url_of_s3 + "\t" + parsed_message[0]
+                            msg_to_sqs = msg_to_sqs.replace("\n"," ")
+                            self.send_to_sqs(msg_to_sqs, attributes)
+                        message.delete()
+
 
     def run_task(self, msg):
         parsed_message = msg.split("\t")
