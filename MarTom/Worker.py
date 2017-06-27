@@ -135,26 +135,31 @@ def main():
     while worker.active:
         try:
             for message in inQueue.receive_messages(VisibilityTimeout=45, MessageAttributeNames=['All']):
-                attributes = message.message_attributes
-                if (message.body == "terminate"):
-                    worker.active = False
-                    terminate_message = 'worker terminated'
-                    terminate_message = terminate_message.replace("\n", " ")
-                    message.delete()
-                    worker.send_to_manager(terminate_message, attributes)
-                else:  # message that need to be processed
-                    file_to_upload = worker.convert(message.body)
-                    if worker.format_error_flag or file_to_upload == "Incorrect message format ":
-                        msg = message.body + "\t" + str(file_to_upload)
-                        msg = msg.replace("\n", " ")
-                        worker.send_to_manager(msg, attributes)
-                        worker.format_error_flag = False
-                    else:
-                        url_of_s3 = worker.upload(file_to_upload)  # uploading the new data to the s3
-                        parsed_message = message.body.split("\t")  # 0 - action ,1 - url
-                        msg = parsed_message[1] + "\t" + url_of_s3 + "\t" + parsed_message[0]
-                        msg = msg.replace("\n", " ")
-                        worker.send_to_manager(msg, attributes)
+                try:
+                    attributes = message.message_attributes
+                    if (message.body == "terminate"):
+                        worker.active = False
+                        terminate_message = 'worker terminated'
+                        terminate_message = terminate_message.replace("\n", " ")
+                        message.delete()
+                        worker.send_to_manager(terminate_message, attributes)
+                    else:  # message that need to be processed
+
+                        file_to_upload = worker.convert(message.body)
+                        if worker.format_error_flag or file_to_upload == "Incorrect message format ":
+                            msg = message.body + "\t" + str(file_to_upload)
+                            msg = msg.replace("\n", " ")
+                            worker.send_to_manager(msg, attributes)
+                            worker.format_error_flag = False
+                        else:
+                            url_of_s3 = worker.upload(file_to_upload)  # uploading the new data to the s3
+                            parsed_message = message.body.split("\t")  # 0 - action ,1 - url
+                            msg = parsed_message[1] + "\t" + url_of_s3 + "\t" + parsed_message[0]
+                            msg = msg.replace("\n", " ")
+                            worker.send_to_manager(msg, attributes)
+                        message.delete()
+                except:
+                    worker.send_to_manager("error timeout", attributes)
                     message.delete()
         except Exception as e:
             print e
