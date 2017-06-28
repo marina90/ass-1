@@ -91,8 +91,7 @@ class Worker :
         filename = msg.rsplit('/', 1)[1]
         filename = filename[:-4]
         try :
-            msg = '{}{}'.format(msg, [0])
-            with Image(filename=msg, resolution=200) as img:
+            with Image(filename=msg+"[0]", resolution=200) as img:
                 img.save(filename=filename + ".png")
         except TypeError as e:
             return self.making_an_error_message(e.message)
