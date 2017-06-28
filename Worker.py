@@ -24,7 +24,7 @@ class Worker :
             inQueue = self.connection.get_queue_by_name(QueueName=self.sqs_names[0])
         except Exception as e:
             print e
-            print "there is no such queue..trying to reconnect,please wait the manager to upload"
+            print "there is no such queue..trying to reconnect,please wait for the manager to upload"
             time.sleep(10)
             self.pull_and_download()
         while self.running:
@@ -58,7 +58,9 @@ class Worker :
                             message.delete()
 
             except Exception as e:
-                print e
+                msg_to_sqs = str(e)
+                self.send_to_sqs(msg_to_sqs, attributes)
+                message.delete()
 
     def run_task(self, msg):
         parsed_message = msg.split("\t")
@@ -89,7 +91,8 @@ class Worker :
         filename = msg.rsplit('/', 1)[1]
         filename = filename[:-4]
         try :
-            with Image(filename=msg+"[0]", resolution=200) as img:
+            msg = '{}{}'.format(msg, [0])
+            with Image(filename=msg, resolution=200) as img:
                 img.save(filename=filename + ".png")
         except TypeError as e:
             return self.making_an_error_message(e.message)
